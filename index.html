@@ -27,7 +27,7 @@
         @keyframes fadeInUp {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateY(30px);
             }
             to {
                 opacity: 1;
@@ -36,7 +36,8 @@
         }
         
         .fade-in-up {
-            animation: fadeInUp 0.5s ease-out;
+            animation: fadeInUp 0.8s ease-out forwards;
+            opacity: 0;
         }
         
         /* キラキラアニメーション */
@@ -175,7 +176,7 @@
         // メインコンポーネント
         const CampaignSearchApp = () => {
             const [stores, setStores] = useState([]);
-            const [searchType, setSearchType] = useState('location');
+            const [searchType, setSearchType] = useState('postal');
             const [searchRange, setSearchRange] = useState(10);
             const [searchResults, setSearchResults] = useState([]);
             const [isLoading, setIsLoading] = useState(false);
@@ -187,6 +188,7 @@
             const [dataLoading, setDataLoading] = useState(true);
             const [campaignOnly, setCampaignOnly] = useState(false);
             const [showTooltip, setShowTooltip] = useState(false);
+            const postalInputRef = React.useRef(null);
             
             // GitHub Gistからデータを読み込み
             useEffect(() => {
@@ -232,7 +234,12 @@
                 return () => clearInterval(interval);
             }, []);
             
-            // Enterキーでの検索実行
+            // 郵便番号入力フィールドへの自動フォーカス
+            useEffect(() => {
+                if (!dataLoading && searchType === 'postal' && postalInputRef.current) {
+                    postalInputRef.current.focus();
+                }
+            }, [dataLoading, searchType]);
             useEffect(() => {
                 const handleKeyPress = (e) => {
                     if (e.key === 'Enter' && !isLoading && stores.length > 0) {
@@ -426,30 +433,6 @@
                                 {/* 検索タイプ選択 */}
                                 <div className="grid grid-cols-3 gap-2 mb-6">
                                     <button
-                                        onClick={() => setSearchType('location')}
-                                        onMouseEnter={(e) => {
-                                            if (searchType !== 'location') {
-                                                e.currentTarget.style.transform = 'scale(1.05)';
-                                                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)';
-                                            }
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            if (searchType !== 'location') {
-                                                e.currentTarget.style.transform = 'scale(1)';
-                                                e.currentTarget.style.boxShadow = '';
-                                            }
-                                        }}
-                                        className={`flex items-center justify-center gap-2 p-4 rounded-lg transition-all duration-200 cursor-pointer border-2 ${
-                                            searchType === 'location' 
-                                                ? 'bg-gradient-to-r from-gray-100 via-pink-200 to-pink-300 text-gray-700 shadow-md transform scale-105 border-pink-300' 
-                                                : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 border-pink-200'
-                                        }`}
-                                        style={{ transition: 'all 0.2s ease' }}
-                                    >
-                                        <Icon name="map-pin" className="w-5 h-5" />
-                                        <span className="hidden sm:inline font-medium">現在地から</span>
-                                    </button>
-                                    <button
                                         onClick={() => setSearchType('postal')}
                                         onMouseEnter={(e) => {
                                             if (searchType !== 'postal') {
@@ -497,12 +480,37 @@
                                         <Icon name="search" className="w-5 h-5" />
                                         <span className="hidden sm:inline font-medium">キーワード</span>
                                     </button>
+                                    <button
+                                        onClick={() => setSearchType('location')}
+                                        onMouseEnter={(e) => {
+                                            if (searchType !== 'location') {
+                                                e.currentTarget.style.transform = 'scale(1.05)';
+                                                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)';
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (searchType !== 'location') {
+                                                e.currentTarget.style.transform = 'scale(1)';
+                                                e.currentTarget.style.boxShadow = '';
+                                            }
+                                        }}
+                                        className={`flex items-center justify-center gap-2 p-4 rounded-lg transition-all duration-200 cursor-pointer border-2 ${
+                                            searchType === 'location' 
+                                                ? 'bg-gradient-to-r from-gray-100 via-pink-200 to-pink-300 text-gray-700 shadow-md transform scale-105 border-pink-300' 
+                                                : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 border-pink-200'
+                                        }`}
+                                        style={{ transition: 'all 0.2s ease' }}
+                                    >
+                                        <Icon name="map-pin" className="w-5 h-5" />
+                                        <span className="hidden sm:inline font-medium">現在地から</span>
+                                    </button>
                                 </div>
                                 
                                 {/* 入力エリア */}
                                 <div className="mb-4">
                                     {searchType === 'postal' && (
                                         <input
+                                            ref={postalInputRef}
                                             type="text"
                                             placeholder="例：1500042"
                                             value={postalCode}
@@ -661,7 +669,7 @@
                                                 <div
                                                     key={store['No.']}
                                                     className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] overflow-hidden cursor-pointer fade-in-up"
-                                                    style={{ animationDelay: `${index * 0.1}s` }}
+                                                    style={{ animationDelay: `${index * 0.2}s` }}
                                                 >
                                                     <div className="p-5">
                                                         {/* 店舗名と距離 */}
