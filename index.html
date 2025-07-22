@@ -22,6 +22,32 @@
         body {
             font-family: 'Meiryo', sans-serif;
         }
+        
+        /* スムーズなフェードインアニメーション */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fade-in-up {
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        /* キラキラアニメーション */
+        @keyframes sparkle {
+            0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+            50% { opacity: 1; transform: scale(1) rotate(180deg); }
+        }
+        
+        .sparkle-animation {
+            animation: sparkle 2s ease-in-out infinite;
+        }
     </style>
 </head>
 <body>
@@ -159,6 +185,8 @@
             const [error, setError] = useState('');
             const [showPulse, setShowPulse] = useState(false);
             const [dataLoading, setDataLoading] = useState(true);
+            const [campaignOnly, setCampaignOnly] = useState(false);
+            const [showTooltip, setShowTooltip] = useState(false);
             
             // GitHub Gistからデータを読み込み
             useEffect(() => {
@@ -351,6 +379,11 @@
                 return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
             };
             
+            // フィルター適用後の結果
+            const filteredResults = campaignOnly 
+                ? searchResults.filter(store => store['キャンペーン実施店（1が実施店、空白は未実施店）'] === 1)
+                : searchResults;
+            
             // データ読み込み中の画面
             if (dataLoading) {
                 return (
@@ -367,18 +400,15 @@
                 <div className="min-h-screen bg-gray-50">
                     {/* ヘッダー */}
                     <header className="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-100">
-                        <div className="container mx-auto px-4 py-4">
+                        <div className="container mx-auto px-4 py-3">
                             <div className="text-center">
-                                <p className="text-lg text-gray-700 mb-1">ナチュリズム × Kep1er</p>
-                                <h1 className="text-2xl font-bold text-gray-900 mb-2">キャンペーン実施店舗検索</h1>
+                                <h1 className="text-3xl font-bold text-gray-900 mb-2">ナチュリズム × Kep1er</h1>
+                                <p className="text-lg text-gray-700 mb-1">キャンペーン実施店舗検索</p>
                                 <div className="flex items-center justify-center gap-2">
                                     <Icon name="sparkles" className={`w-4 h-4 text-yellow-400 transition-all duration-300 ${showSparkle ? 'scale-125 opacity-100' : 'scale-75 opacity-50'}`} />
                                     <p className="text-sm text-pink-600 font-medium">ドンキ限定！トレカが必ずもらえる！</p>
                                     <Icon name="sparkles" className={`w-4 h-4 text-yellow-400 transition-all duration-300 ${!showSparkle ? 'scale-125 opacity-100' : 'scale-75 opacity-50'}`} />
                                 </div>
-                                {stores.length > 0 && (
-                                    <p className="text-xs text-gray-500 mt-1">全{stores.length}店舗から検索</p>
-                                )}
                             </div>
                         </div>
                     </header>
@@ -386,7 +416,7 @@
                     {/* エラー表示 */}
                     {error && (
                         <div className="container mx-auto px-4 mt-4">
-                            <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm max-w-4xl mx-auto">
+                            <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm max-w-4xl mx-auto fade-in-up">
                                 {error}
                             </div>
                         </div>
@@ -594,113 +624,146 @@
                         <section className="py-6">
                             <div className="container mx-auto px-4">
                                 <div className="bg-pink-50 rounded-xl shadow-lg p-6 max-w-4xl mx-auto">
-                                    <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                        <span>検索結果</span>
-                                        <span className="inline-block px-3 py-1 bg-pink-500 text-white rounded-full text-sm">
-                                            {searchResults.length}件
-                                        </span>
-                                    </h2>
-                                    
-                                    <div className="grid gap-4 md:grid-cols-2">
-                                        {searchResults.map((store, index) => (
-                                            <div
-                                                key={store['No.']}
-                                                className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] overflow-hidden cursor-pointer"
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                            <span>検索結果</span>
+                                            <span className="inline-block px-3 py-1 bg-pink-500 text-white rounded-full text-sm">
+                                                {filteredResults.length}件
+                                            </span>
+                                        </h2>
+                                        <label className="flex items-center gap-2 cursor-pointer group relative">
+                                            <input
+                                                type="checkbox"
+                                                checked={campaignOnly}
+                                                onChange={(e) => setCampaignOnly(e.target.checked)}
+                                                className="w-4 h-4 text-pink-600 bg-gray-100 border-gray-300 rounded focus:ring-pink-500 focus:ring-2"
+                                            />
+                                            <span 
+                                                className="text-sm font-medium text-gray-700 group-hover:text-pink-600 transition-colors"
+                                                onMouseEnter={() => setShowTooltip(true)}
+                                                onMouseLeave={() => setShowTooltip(false)}
                                             >
-                                                <div className="p-5">
-                                                    {/* 店舗名と距離 */}
-                                                    <div className="flex justify-between items-start mb-3">
-                                                        <div className="flex-1">
-                                                            <h3 className="text-lg font-bold text-gray-900 mb-1">
-                                                                {store['店舗名']}
-                                                            </h3>
-                                                            <p className="text-sm text-gray-600">{store['住所']}</p>
-                                                        </div>
-                                                        {store.distance !== undefined && (
-                                                            <div className="flex flex-col items-end gap-1">
-                                                                <div className="bg-cyan-100 text-cyan-800 px-3 py-1 rounded-full text-sm font-medium">
-                                                                    {store.distance.toFixed(1)} km
-                                                                </div>
-                                                                {index === 0 && <span className="text-xs font-bold text-yellow-500 animate-bounce">Nearest☆</span>}
-                                                                {index === 1 && <span className="text-xs font-bold text-gray-500 animate-pulse">2nd</span>}
-                                                                {index === 2 && <span className="text-xs font-bold text-gray-400 animate-pulse">3rd</span>}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    
-                                                    {/* キャンペーンステータス */}
-                                                    <div className="mb-4">
-                                                        {store['キャンペーン実施店（1が実施店、空白は未実施店）'] === 1 ? (
-                                                            <div className="bg-gradient-to-r from-pink-100 to-yellow-100 rounded-lg p-3 text-center">
-                                                                <p className="text-lg font-bold text-pink-600 mb-1" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.1)' }}>
-                                                                    キャンペーン実施中
-                                                                </p>
-                                                                <div className="flex items-center justify-center gap-2 text-sm">
-                                                                    <Icon name="gift" className="w-4 h-4 text-pink-500" />
-                                                                    <span className="text-gray-700">Kep1erトレカ・サイン入りトレカ</span>
-                                                                    <Icon name="sparkles" className="w-4 h-4 text-yellow-400" />
-                                                                </div>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="bg-gray-100 rounded-lg p-3 text-center">
-                                                                <p className="text-gray-600">キャンペーン未実施店舗</p>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    
-                                                    {/* 店舗情報 */}
-                                                    <div className="space-y-2 text-sm">
-                                                        <div className="flex items-center gap-2 text-gray-700">
-                                                            <Icon name="clock" className="w-4 h-4" />
-                                                            <span>{store['営業時間']}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-2 text-gray-700">
-                                                            <Icon name="calendar" className="w-4 h-4" />
-                                                            <span>定休日: {store['定休日']}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-2 text-gray-700">
-                                                            <Icon name="phone" className="w-4 h-4" />
-                                                            <span>{store['電話番号']}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-2 text-gray-700">
-                                                            <Icon name="map-pin" className="w-4 h-4" />
-                                                            <span>最寄り駅から徒歩圏内</span>
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    {/* ルート案内ボタン */}
-                                                    <a
-                                                        href={getGoogleMapsUrl(store['住所'])}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        onMouseEnter={(e) => {
-                                                            e.currentTarget.style.transform = 'scale(1.05)';
-                                                            e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)';
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.currentTarget.style.transform = 'scale(1)';
-                                                            e.currentTarget.style.boxShadow = '';
-                                                        }}
-                                                        onMouseDown={(e) => {
-                                                            e.currentTarget.style.transform = 'scale(0.95)';
-                                                        }}
-                                                        onMouseUp={(e) => {
-                                                            e.currentTarget.style.transform = 'scale(1.05)';
-                                                        }}
-                                                        className="mt-4 w-full bg-gradient-to-r from-cyan-100 to-cyan-200 text-cyan-800 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 transform"
-                                                        style={{ 
-                                                            backgroundColor: '#b2f5ea',
-                                                            color: '#285e61',
-                                                            transition: 'all 0.2s ease'
-                                                        }}
-                                                    >
-                                                        <Icon name="navigation-2" className="w-5 h-5" />
-                                                        ルートを見る
-                                                    </a>
+                                                実施店舗だけ
+                                            </span>
+                                            {showTooltip && (
+                                                <div className="absolute -top-8 left-0 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                                                    キャンペーン実施店舗のみ表示
                                                 </div>
-                                            </div>
-                                        ))}
+                                            )}
+                                        </label>
                                     </div>
+                                    
+                                    {filteredResults.length === 0 ? (
+                                        <div className="text-center py-8">
+                                            <Icon name="info" className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                                            <p className="text-gray-600">キャンペーン実施店舗が見つかりませんでした</p>
+                                        </div>
+                                    ) : (
+                                        <div className="grid gap-4 md:grid-cols-2">
+                                            {filteredResults.map((store, index) => (
+                                                <div
+                                                    key={store['No.']}
+                                                    className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] overflow-hidden cursor-pointer fade-in-up"
+                                                    style={{ animationDelay: `${index * 0.1}s` }}
+                                                >
+                                                    <div className="p-5">
+                                                        {/* 店舗名と距離 */}
+                                                        <div className="flex justify-between items-start mb-3">
+                                                            <div className="flex-1">
+                                                                <h3 className="text-lg font-bold text-gray-900 mb-1">
+                                                                    {store['店舗名']}
+                                                                </h3>
+                                                                <p className="text-sm text-gray-600">{store['住所']}</p>
+                                                            </div>
+                                                            {store.distance !== undefined && (
+                                                                <div className="flex flex-col items-end gap-1">
+                                                                    <div className="bg-cyan-100 text-cyan-800 px-3 py-1 rounded-full text-sm font-medium">
+                                                                        {store.distance.toFixed(1)} km
+                                                                    </div>
+                                                                    {index === 0 && <span className="text-xs font-bold text-yellow-500 animate-bounce">Nearest☆</span>}
+                                                                    {index === 1 && <span className="text-xs font-bold text-gray-500 animate-pulse">2nd</span>}
+                                                                    {index === 2 && <span className="text-xs font-bold text-gray-400 animate-pulse">3rd</span>}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        
+                                                        {/* キャンペーンステータス */}
+                                                        <div className="mb-4">
+                                                            {store['キャンペーン実施店（1が実施店、空白は未実施店）'] === 1 ? (
+                                                                <div className="bg-gradient-to-r from-pink-100 to-yellow-100 rounded-lg p-3 text-center relative overflow-hidden">
+                                                                    <div className="absolute inset-0 flex items-center justify-center opacity-10">
+                                                                        <Icon name="sparkles" className="w-20 h-20 text-yellow-400 sparkle-animation" />
+                                                                    </div>
+                                                                    <p className="text-lg font-bold text-pink-600 mb-1 relative z-10" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.1)' }}>
+                                                                        キャンペーン実施中
+                                                                    </p>
+                                                                    <div className="flex items-center justify-center gap-2 text-sm relative z-10">
+                                                                        <Icon name="gift" className="w-4 h-4 text-pink-500" />
+                                                                        <span className="text-gray-700">Kep1erトレカ・サイン入りトレカ</span>
+                                                                        <Icon name="sparkles" className="w-4 h-4 text-yellow-400" />
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="bg-gray-100 rounded-lg p-3 text-center">
+                                                                    <p className="text-gray-600">キャンペーン未実施店舗</p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        
+                                                        {/* 店舗情報 */}
+                                                        <div className="space-y-2 text-sm">
+                                                            <div className="flex items-center gap-2 text-gray-700">
+                                                                <Icon name="clock" className="w-4 h-4" />
+                                                                <span>{store['営業時間']}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-2 text-gray-700">
+                                                                <Icon name="calendar" className="w-4 h-4" />
+                                                                <span>定休日: {store['定休日']}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-2 text-gray-700">
+                                                                <Icon name="phone" className="w-4 h-4" />
+                                                                <span>{store['電話番号']}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-2 text-gray-700">
+                                                                <Icon name="map-pin" className="w-4 h-4" />
+                                                                <span>最寄り駅から徒歩圏内</span>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        {/* ルート案内ボタン */}
+                                                        <a
+                                                            href={getGoogleMapsUrl(store['住所'])}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            onMouseEnter={(e) => {
+                                                                e.currentTarget.style.transform = 'scale(1.05)';
+                                                                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)';
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                e.currentTarget.style.transform = 'scale(1)';
+                                                                e.currentTarget.style.boxShadow = '';
+                                                            }}
+                                                            onMouseDown={(e) => {
+                                                                e.currentTarget.style.transform = 'scale(0.95)';
+                                                            }}
+                                                            onMouseUp={(e) => {
+                                                                e.currentTarget.style.transform = 'scale(1.05)';
+                                                            }}
+                                                            className="mt-4 w-full bg-gradient-to-r from-cyan-100 to-cyan-200 text-cyan-800 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 transform"
+                                                            style={{ 
+                                                                backgroundColor: '#b2f5ea',
+                                                                color: '#285e61',
+                                                                transition: 'all 0.2s ease'
+                                                            }}
+                                                        >
+                                                            <Icon name="navigation-2" className="w-5 h-5" />
+                                                            ルートを見る
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </section>
@@ -710,7 +773,8 @@
                     <footer className="mt-12 bg-gradient-to-r from-purple-100 to-pink-100 py-8">
                         <div className="container mx-auto px-4 text-center">
                             <p className="text-sm text-gray-700 mb-2">
-                                © 2025 ナチュリズム × Kep1er キャンペーン実施店舗検索システム
+                                © 2025 ナチュリズム × Kep1er<br />
+                                キャンペーン実施店舗検索システム
                             </p>
                             <p className="text-xs text-gray-600">
                                 キャンペーン期間：2025年7月18日～（景品がなくなり次第終了）
